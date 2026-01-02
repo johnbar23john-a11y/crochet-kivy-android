@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+ 
+    
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -39,3 +42,8 @@ jobs:
       with:
         name: crochet-apk
         path: bin/*.apk
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        accept-android-sdk-licenses: true # This automatically accepts necessary licenses
+
