@@ -8,6 +8,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
+  # ... other steps ...
+    - name: Set up Android environment and accept licenses
+    run: |
+      # Ensure tools are available (paths might need adjustment based on the runner image)
+      export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+      mkdir -p $ANDROID_HOME/licenses/
+      # Accept common licenses
+      echo "8933bad161af4178b1185d1fe29e266dd3e9ed61" > $ANDROID_HOME/licenses/android-sdk-license
+      echo "d56f5187479451eabf0aaee78ea9aad3b87cdc25" > $ANDROID_HOME/licenses/android-sdk-preview-license
+      echo "ac8db5f4d54316d688970e9a0a4c148e6584c89" > $ANDROID_HOME/licenses/android-sdk-licenses
+   
+
+      - name: Build Android APK
+        run: |
+        buildozer android debug
+
 
  
     - name: Setup Android SDK
