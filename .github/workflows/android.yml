@@ -1,69 +1,59 @@
 name: Build Android APK
 
-on:
+on: 
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    steps:
     
-  # ... other steps ...
-    - name: Set up Android environment and accept licenses
-    run: |
-      # Ensure tools are available (paths might need adjustment based on the runner image)
-      export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-      mkdir -p $ANDROID_HOME/licenses/
-      # Accept common licenses
-      echo "8933bad161af4178b1185d1fe29e266dd3e9ed61" > $ANDROID_HOME/licenses/android-sdk-license
-      echo "d56f5187479451eabf0aaee78ea9aad3b87cdc25" > $ANDROID_HOME/licenses/android-sdk-preview-license
-      echo "ac8db5f4d54316d688970e9a0a4c148e6584c89" > $ANDROID_HOME/licenses/android-sdk-licenses
-   
-
-      - name: Build Android APK
+    steps:
+      # 1. First, checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      # 3. Set up Android SDK and accept licenses
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          accept-android-sdk-licenses: true
+      
+      # 4. Install system dependencies
+      - name: Install system dependencies
         run: |
-        buildozer android debug
-
-
- 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        accept-android-sdk-licenses: true # This automatically accepts necessary licenses
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install system dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          zip unzip git openjdk-17-jdk \
-          autoconf automake libtool pkg-config \
-          zlib1g-dev libncurses5-dev libffi-dev \
-          libssl-dev cmake
-
-    - name: Install Buildozer
-      run: |
-        python -m pip install --upgrade pip
-        pip install buildozer cython
-
-    - name: Build APK
-      run: |
-        buildozer android debug
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: crochet-apk
-        path: bin/*.apk
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        accept-android-sdk-licenses: true # This automatically accepts necessary licenses
-
+          sudo apt update
+          sudo apt install -y \
+            zip unzip git openjdk-17-jdk \
+            autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libffi-dev \
+            libssl-dev cmake
+      
+      # 5. Install Buildozer and Cython
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython
+      
+      # 6. Accept additional SDK licenses (if needed)
+      - name: Accept additional Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses || true
+      
+      # 7. Build the APK
+      - name: Build APK
+        run: |
+          buildozer android debug
+      
+      # 8. Upload the artifact
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: crochet-apk
+          path: bin/*.apk
+``*
