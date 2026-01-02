@@ -8,23 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. First, checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       
-      # 3. Set up Android SDK and accept licenses
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-        with:
-          accept-android-sdk-licenses: true
-      
-      # 4. Install system dependencies
+      # Install system dependencies first
       - name: Install system dependencies
         run: |
           sudo apt update
@@ -32,28 +24,57 @@ jobs:
             zip unzip git openjdk-17-jdk \
             autoconf automake libtool pkg-config \
             zlib1g-dev libncurses5-dev libffi-dev \
-            libssl-dev cmake
+            libssl-dev cmake ccache
       
-      # 5. Install Buildozer and Cython
+      # Set up Android SDK with specific build-tools
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+      
+      # Install required Android SDK components
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install "build-tools;34.0.0" "platform-tools" "platforms;android-34"
+          sdkmanager --install "ndk;25.2.9519653"
+          yes | sdkmanager --licenses
+      
+      # Install Buildozer and Cython
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer cython==0.29.36
       
-      # 6. Accept additional SDK licenses (if needed)
-      - name: Accept additional Android SDK licenses
+      # Set environment variables for Android SDK
+      - name: Set Android environment variables
         run: |
-          yes | sdkmanager --licenses || true
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
       
-      # 7. Build the APK
+      # Cache Buildozer dependencies (optional but recommended)
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v3
+        with:
+          path: ~/.buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+      
+      - name: Cache Buildozer local directory
+        uses: actions/cache@v3
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-buildozer-local-${{ hashFiles('buildozer.spec') }}
+      
+      # Build the APK
       - name: Build APK
         run: |
-          buildozer android debug
+          buildozer -v android debug
       
-      # 8. Upload the artifact
+      # Upload the artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: crochet-apk
           path: bin/*.apk
-``*
+        if: success()
