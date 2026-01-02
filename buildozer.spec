@@ -1,4 +1,6 @@
 [app]
+# (str) App version
+version = 0.1
 title = Crochet Pattern Viewer
 package.name = crochetviewer
 package.domain = org.crochet
@@ -16,3 +18,6 @@ android.permissions = READ_EXTERNAL_STORAGE
 [buildozer]
 log_level = 2
 warn_on_root = 1
+
+
+
